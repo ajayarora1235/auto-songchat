@@ -40,7 +40,7 @@ class AI_Songwriter:
         instruction += "You are also given a section description, genre, era, and overall description of the song."
 
         ## read in prompt lyrics from convo .txt and add it to instruction
-        with open("write_section_ex.txt", "r") as f:
+        with open("prompts/write_section_ex.txt", "r") as f:
             convo = f.read()
         instruction += "Here's an example:\n{convo}\nNow do it for this input:"
         
@@ -99,7 +99,7 @@ class AI_Songwriter:
         
         instruction += "You are also given a genre, era, and the rest of the section."
         
-        with open("revise_section_ex.txt", "r") as f:
+        with open("prompts/revise_section_ex.txt", "r") as f:
             convo = f.read()
         instruction += "Here's an example:\n{convo}\nNow do it for this input:"
         
@@ -142,7 +142,7 @@ class AI_Songwriter:
     def write_all_lyrics(self, sections_to_be_written, sections_written, overall_song_description):
         instruction = "Write the remainder of this full song given an overall description of the song, genre, era, and a description of the sections to complete:"
         
-        with open("write_full_song_ex.txt", "r") as f:
+        with open("prompts/write_full_song_ex.txt", "r") as f:
             convo = f.read()
         instruction += "Here's an example:\n{convo}\nNow do it for this input:"
         

@@ -1,0 +1,16 @@
+'''
+Genre list
+Preset dropdown: Missing Home, Heartbroken, Getting Turnt, Childhood Nostalgia, (Custom) How are you?
+- tags based on preset
+Artist identity dropdown: A 15-year old boy who dreams of being a broadway actor, A 23-year old soft but bombastic woman who loves to rap, dance, and take over the streets, A 30-year old man who has plans to take over the world as a villain
+
+male tenor, dramatic, emotional, strings
+
+pass artist identity in starting prompt to gpt-4 conversation.
+pass preset dropdown to gpt-4 conversation to inspire the questions that Lupe asks the user.
+
+-Ask every 4 back-and-forths do you want to talk more? Or are you ready for your song? (add button for song in assistant's message)
+
+-Mention lyrics
+-Mention every 4 back-and-forths lyrics that you’ll include in the song [calling gpt-4 to generate the lyrics and identify one line that's most relevant to the last message]
+'''

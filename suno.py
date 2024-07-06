@@ -1,5 +1,6 @@
 import requests
 import time
+import os
 
 base_url = "http://127.0.0.1:8000"
 api_endpoint_submit = f"{base_url}/generate/"
@@ -11,14 +12,32 @@ headers = {"api-key": api_key}
 # tags = "lofi, chill, happy"
 # prompt = "I'm a fish swimming in the ocean\nI'm a bird flying in the sky\nI'm a flower blooming in the garden\nI'm a tree standing tall and high"
 
-# Takes about 2.5 minutes
+def make_song(snippet_lyrics, inst_tags, continue_from_clip=None, continue_at=None):
+    """
+    Generates a song based on provided lyrics and instrumental tags.
+
+    Args:
+        snippet_lyrics (str): The lyrics for the song snippet.
+        inst_tags (str): The instrumental tags for the song.
+        continue_from_clip (str, optional): The clip ID to continue from, if any. Defaults to None.
+        continue_at (int, optional): The position to continue at in the clip. Defaults to None.
+
+    Returns:
+        str: The link to the generated song.
+    """
+    os.makedirs("audio_clips", exist_ok=True)
+    song_name = f"SG_{int(time.time())}"
+    suno_song_path = f"./audio_clips/suno_{song_name}.wav"
+    print("Passing to generate_song:", inst_tags, snippet_lyrics, suno_song_path)
+
+    song_link = generate_song(inst_tags, snippet_lyrics, suno_song_path, continue_from_clip, continue_at) \
+        if continue_from_clip else generate_song(inst_tags, snippet_lyrics, suno_song_path)
+
+    return song_link
+
+# Takes about 30 seconds
 def generate_song(tags, prompt, save_path, clip_id=None, continue_at=30):
   # print("Generating song with tags", tags, "and prompt", prompt)
-
-  # prompt_word_count = len(prompt.split(" "))
-  # if prompt_word_count > 230:
-  #   print("Prompt too long, truncating to 230 words")
-  #   prompt = " ".join(prompt.split(" ")[:230])
 
   data = {
     "title": "Songchat " + str(int(time.time())),
@@ -88,21 +107,6 @@ def generate_song(tags, prompt, save_path, clip_id=None, continue_at=30):
 
   return url
 
-  # response = requests.get(url) #, stream=True)
-  # chunk_size = 8192
-  # print(url)
-
-  # i = 0
-
-  # for chunk in response.iter_content(chunk_size):
-  #   print("got chunk")
-  #   i += 1
-  #   if i % 20 == 0:
-  #     print(chunk)
-  #   yield chunk
-  # with open(save_path, "wb") as f:
-  #   f.write(response.content)
-  # print("Saved song to", save_path)
 
 def concat_snippets(clip_id):
   concat_url = f"{api_endpoint_concat}?clip_id={clip_id}"
