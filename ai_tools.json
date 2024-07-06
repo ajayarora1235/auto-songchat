@@ -1,0 +1,229 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "write_section",
+      "description": "Write a section of a song based on given ideas. Anytime you would like to suggest lyrics for a new section or the user has provided enough ideas for a new section, you must call this function.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "section_name": {
+            "type": "string",
+            "description": "Name of new section being written."
+          },
+          "section_description": {
+            "type": "string",
+            "description": "Description of section as stated in first message of the conversation"
+          },
+          "relevant_ideas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ideas that should be included in the section that is being written. Obtained by paraphrasing the key details from the user's responses about their story into short sentences that each start with 'I ...', 'I ...', etc."
+          },
+          "section_length": {
+            "type": "number",
+            "description": "Number of lines in the section. This is also the number of bars, retrieved from first message of the conversation."
+          },
+          "snippet_instrumental_tags": {
+            "type": "string",
+            "description": "Instrumental tags to be used for this section. Deduce from most recent list of suggested instrumental tags in conversation. Should be comma separated string of one-word tags that describe genre as stated in intro message, instruments, moods. Specify gender."
+          },
+          "snippet_clip_to_continue_from": {
+            "type": "string",
+            "description": "The last approved clip of the song to continue the requested section from. Deduce from most recent approved clip of prior section in conversation. If user did not receive a snippet for the prior section or ever before, this should not be passed."
+          },
+          "sections_written": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Sections that have been written so far. This is to ensure that the song is coherent and that the sections flow well together. Include section headers (ie [verse 1]) in the lyrics."
+          },
+          "overall_song_description": {
+            "type": "string",
+            "description": "Description of the overall song. As stated in first message of conversation."
+          }
+        },
+        "required": ["section_name", "section_description", "relevant_ideas", "section_length", "snippet_instrumental_tags"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "revise_section_lyrics",
+      "description": "Revise a consecutive set of lines from a section of a song based on given ideas",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "section_name": {
+            "type": "string",
+            "description": "Name of section we are revising"
+          },
+          "current_section": {
+            "type": "string",
+            "description": "Current version of lyrics in section of the song. The last outputted version of the section before user suggested changes that we are now implementing."
+          },
+          "lines_to_revise": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Lines to revise, as a list of numbers. The first line is labelled 1, second 2, and so on. Lines to change should be assessed based on feedback user provides and where they suggest changes."
+          },
+          "snippet_instrumental_tags": {
+            "type": "string",
+            "description": "Instrumental tags to be used for this section revision. This should be the exact same as what was used for the snippet being revised. The instrumental tags are listed under the recent audio clip html."
+          },
+          "snippet_clip_to_continue_from": {
+            "type": "string",
+            "description": "The 'continued from clip:' clip id that was used in the original snippet we are now revising. This should be the exact same as 'continued from clip' for the snippet being revised, listed under the original snippet's audioplayer; if it is None, this should not be passed."
+          },
+          "relevant_ideas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ideas that should be included in the lines that are being changed. Should be directly derived from suggested user changes."
+          },
+          "relevant_words": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Words that are requested to be included in revised lines. Unless specific words are requested, this should be empty"
+          }
+        },
+        "required": ["section_name", "current_section", "lines_to_revise", "snippet_instrumental_tags"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "revise_instrumental_tags",
+      "description": "Revise instrumental tags passed to instrumental generator based on user feedback. Only call when user explicitly comments on instrumental. This will re-generate all the lyrics with this new instrumental. Confirm with the user that this is okay before running.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "current_instrumental_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Current instrumental tags passed to instrumental generator. Deduce from most recent list of instrumental tags in conversation."
+          },
+          "user_instrumental_feedback": {
+            "type": "string",
+            "description": "A single sentence summary of the user's feedback on instrumental. Can include suggested moods, genres, or instruments."
+          },
+          "sections_written": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "All the sections that have been written so far for us to regenerate with the new instrumental. Include the lyrics from the current section that we are revising. Include section headers (ie [verse 1]) in the lyrics."
+          }
+        },
+        "required": ["current_instrumental_tags", "user_instrumental_feedback", "sections_written"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_audio_snippet",
+      "description": "Call this function when the user explicitly asks 'Can I have an audio snippet'. Return a clip of all the parts of the song we've written that they have not heard.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "snippet_lyrics": {
+            "type": "string",
+            "description": "The lyrics of the section that the user wants to hear. If there are lyrics that the user approved but did not hear a snippet of, those must be included in this snippet as well before the current section. Include section headers (ie [verse 1]) in the lyrics."
+          },
+          "snippet_instrumental_tags": {
+            "type": "string",
+            "description": "Instrumental tags to be used to generate the snippet. Deduce from most recent list of suggested instrumental tags in conversation. Should be comma separated string of one-word tags. Specify gender."
+          },
+          "snippet_clip_to_continue_from": {
+            "type": "string",
+            "description": "The last approved song clip to continue from. Almost always the most recent clip id outputted in the conversation. If user did not receive a snippet for the prior section or ever before, this should not be passed."
+          }
+        },
+        "required": ["snippet_lyrics", "snippet_instrumental_tags"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "merge_all_snippets",
+      "description": "Merge all existing snippets of the song together. Should only be called when explicitly requested by the user.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "last_snippet_id": {
+            "type": "string",
+            "description": "The ID of the last approved/generated snippet of the song. The path of snippets to merge is contained in this snippet, so only pass the id of the last one generated."
+          }
+        },
+        "required": ["last_snippet_id"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "finish_full_song",
+      "description": "Write the full song based on the snippets that have been generated. Should only be called when explicitly requested by the user.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sections_to_be_written": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "section_name": {
+                  "type": "string",
+                  "description": "Name of the section that have yet to be written or suggested. Exactly quoted as stated in first message of the conversation"
+                },
+                "section_description": {
+                  "type": "string",
+                  "description": "The description of the section that have yet to be written or suggested. Exactly quoted as stated in first message of the conversation"
+                },
+                "section_length": {
+                  "type": "number",
+                  "description": "Number of lines in the section. This is also the number of bars, retrieved from first message of the conversation."
+                }
+              }
+            },
+            "description": "The sections that have yet to be written or suggested. Should be in chronological order of the sections as positioned in the song, retrieved from the first message of the conversation."
+          },
+          "snippet_instrumental_tags": {
+            "type": "string",
+            "description": "Instrumental tags to be used for the remaining sections. Deduce from most recent list of suggested instrumental tags in conversation. Should be comma separated string of one-word tags. Specify gender."
+          },
+          "snippet_clip_to_continue_from": {
+            "type": "string",
+            "description": "The last approved clip ID of the song to continue the remaining sections from. Almost always the most recent clip id outputted in the conversation. If user did not receive a snippet for the prior section or ever before, this should not be passed."
+          },
+          "sections_written": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Sections that have been written so far. This is to ensure that the song is coherent and that the sections flow well together. Include section headers (ie [verse 1]) in the lyrics. If no sections have been suggested yet, this should be an empty list."
+          },
+          "overall_song_description": {
+            "type": "string",
+            "description": "Description of the overall song. As stated in first message of conversation."
+          }
+        },
+        "required": ["sections_to_be_written", "snippet_instrumental_tags", "snippet_clip_to_continue", "sections_written", "overall_song_description"]
+      }
+    }
+  }
+]

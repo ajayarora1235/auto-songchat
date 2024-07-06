@@ -1,0 +1,8 @@
+Based on the following conversation where a user receives a snippet of audio from an assistant, answer the following questions.
+1.) Did the user receive a snippet from the assistant in the assistant's last response? YES or NO are only valid answers.
+2.) If so, did the user like the snippet they received based on their response or did they have things to change? YES or NO are only valid answers. If the answer to 1.) is NO, then this answer should automatically be NO. 
+3.) If the user had things to change, first generate new lyrics for the particular section that was generated in the snippet to replace the lyrics they didn't like. To address the parts of the instrumental the user didn't like, make suggestions for five new tags to describe a new instrumental compared to what tags are currently being passed in. If no comment was made about the instrumental, then the tags should remain the same and be returned as such.
+
+Here is the conversation, please answer questions 1 and 2 with one word in the format "1.) ____\n2.) ____\n". Answer question 3 with only the A.) lyrics separated by line and no other information in the format "3.) [lyrics]\n{lyric line} \n {lyric line} \n {lyric line} ..." and then B.) the tags in the format "\n[tags] {tag 1}, {tag 2}, ...".
+
+Conversation:

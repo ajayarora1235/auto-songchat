@@ -1,0 +1,4 @@
+nvidia-cuda-toolkit
+build-essential
+ffmpeg
+chromium-driver

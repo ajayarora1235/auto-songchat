@@ -1,0 +1,7 @@
+Based on the following conversation, answer the following questions.
+1.) What was the last snippet the user received that they liked? If no such snippet, answer NONE. 
+2.) As indicated in the conversation, the user has requested for a new snippet. What are the lyrics that should be included in this snippet? Note that if no snippet was previously requested, then the user would want to hear all the lyrics suggested so far. If a snippet was previously suggested and the user liked it, then the user would want to only hear a snippet of the new lyrics that have been suggested since that last snippet. If the last snippet suggested was not liked by the user and they are requesting to re-generate, then we'd want to use the same lyrics as what was used for that snippet.
+
+Here is the conversation, please answer question 1 with one word in the format "1.) ____". Answer question 2 with only the lyrics separated by line and no other information in the format "2.) {lyric line} \n {lyric line} \n {lyric line} ...".
+
+Conversation:
