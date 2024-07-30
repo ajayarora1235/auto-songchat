@@ -1,2 +1,8 @@
 .env
 __pycache__
+audio_clips/*.mp3
+audio_clips/*.wav
+data/*.png
+audio_clips/*.mp3
+audio_clips/*.wav
+data/*.png
