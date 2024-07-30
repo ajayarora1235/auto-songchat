@@ -7,3 +7,4 @@ openai==1.17.1
 
 ffmpeg-python
 regex
+gradio_modal==0.0.3
