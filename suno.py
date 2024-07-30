@@ -1,6 +1,8 @@
 import requests
 import time
 import os
+import asyncio
+import httpx
 
 base_url = "http://127.0.0.1:8000"
 api_endpoint_submit = f"{base_url}/generate/"
@@ -52,6 +54,25 @@ def generate_song(tags, prompt, save_path, clip_id=None, continue_at=30):
           data["continue_at"] = continue_at
       else:
           data["continue_at"] = 30
+      
+      feed_url = api_endpoint_info + clip_id
+      response = requests.get(feed_url, headers=headers)
+      response_data = response.json()
+      while True:
+        if response.status_code != 200:
+          print("No data in response, retrying", response_data)
+          time.sleep(2)
+          continue
+        elif response_data[0]["status"] == 'streaming':
+          return "Snippet to extend is still streaming, please wait to request later."
+        if response_data[0]["status"] == 'complete':
+          break
+        else:
+          time.sleep(8)
+          continue
+
+
+      
 
   response = requests.post(api_endpoint_submit, json=data) #,headers=headers)
   response_data = response.json()
@@ -107,7 +128,6 @@ def generate_song(tags, prompt, save_path, clip_id=None, continue_at=30):
 
   return url
 
-
 def concat_snippets(clip_id):
   concat_url = f"{api_endpoint_concat}?clip_id={clip_id}"
   feed_url = api_endpoint_info + clip_id
@@ -119,7 +139,10 @@ def concat_snippets(clip_id):
       print("No data in response, retrying", response_data)
       time.sleep(2)
       continue
-    if response_data[0]["status"] == 'complete':
+    ## CATCH THE CASE WHERE response_data a list of length 1 versus just a dictionary straight up
+    elif response_data["status"] == 'streaming':
+       return "Song is still streaming, please wait to request later.", None, None, []
+    if response_data["status"] == 'complete':
       break
     else:
       time.sleep(8)
@@ -137,6 +160,7 @@ def concat_snippets(clip_id):
     return url, lyrics, concatenated_clips
 
   lyrics = response_data["metadata"]["prompt"]
+  tags = response_data["metadata"]["tags"]
   concatenated_clips = [x["id"] for x in response_data["metadata"]["concat_history"]]
   song_id = response_data["id"]
 
@@ -144,12 +168,13 @@ def concat_snippets(clip_id):
   while True:
     response = requests.get(api_endpoint_info + song_id, headers=headers)
     response_data = response.json()
+    print("feed response for concatenated song", response_data)
     if response.status_code != 200:
       print("No data in response, retrying", response_data)
       time.sleep(2)
       continue
       # print("Got response", response_data)
-    if response_data[0]["status"] == 'streaming':
+    if response_data[0]["status"] == 'streaming' or response_data[0]["audio_url"] != "" or response_data[0]["status"] == 'complete':
       break
     else:
       time.sleep(2)
@@ -160,6 +185,34 @@ def concat_snippets(clip_id):
   print("Got song", response_data[0]["audio_url"])
   url = response_data[0]["audio_url"]
 
-  return url, lyrics, concatenated_clips
+  return url, lyrics, tags, concatenated_clips
+
+def update_song_links(generated_audios):
+  updated_generated_audios = generated_audios.copy()
+  for i, song_info in enumerate(generated_audios):
+    clip_path, lyrics, instrumental, title, status = song_info
+    if "audiopipe.suno.ai" in clip_path or status == "streaming":
+        clip_id = clip_path.split("?item_id=")[-1]
+        feed_url = api_endpoint_info + clip_id
+
+        response = requests.get(feed_url, headers=headers)
+        response_data = response.json()
+        if response.status_code != 200:
+          print("No data in response, retrying", response_data)
+          continue
+        elif response_data[0]["status"] == 'streaming':
+          print("still streaming, update later")
+          continue
+        if response_data[0]["status"] == 'complete':
+          updated_clip_path = response_data[0]["audio_url"]
+          print(updated_clip_path)
+          updated_generated_audios[i] = (updated_clip_path, lyrics, instrumental, title, "complete")
+
+  return updated_generated_audios
+
+
+
+  
+
 
   

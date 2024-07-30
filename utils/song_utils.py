@@ -1,8 +1,15 @@
 import os
 from openai import OpenAI
 from typing import Optional, Tuple, List, Dict
+from dotenv import load_dotenv
+from gradio import ChatMessage
+import gradio as gr
+
+# Load environment variables from .env file
+load_dotenv()
 
 client_key = os.getenv("OPEN_AI_KEY")
+print(client_key)
 oai_client = OpenAI(
     api_key=client_key,
 )
@@ -87,6 +94,7 @@ def messages_to_history(messages: Messages) -> Tuple[str, History]:
     """
     assert messages[0]['role'] == 'system' and messages[1]['role'] == 'user'
 
+
     # Filter out 'tool' messages and those containing 'tool_calls'
     messages_for_parsing = [msg for msg in messages if msg['role'] != 'tool' and 'tool_calls' not in msg]
 
@@ -98,8 +106,8 @@ def messages_to_history(messages: Messages) -> Tuple[str, History]:
 
     # Create history from user-assistant message pairs
     history = [
-        (q['content'], r['content'])
-        for q, r in zip(messages_for_parsing[1::2], messages_for_parsing[2::2])
+        ChatMessage(role = q['role'], content = q['content'])
+        for q in messages_for_parsing[2:]
     ]
 
     return history
@@ -120,8 +128,8 @@ def get_starting_messages(song_lengths: str, song_title: str, song_blurb: str, s
     """
     system_prompt = (
         "You are an expert at writing songs. You are with an everyday person, and you will write the lyrics of the song "
-        "based on this person's life by asking questions about a story of theirs. Design your questions on your own, without "
-        "using your tools, to help you understand the user's story, so you can write a song about the user's experience that "
+        "based on this person's life by asking questions about a story of theirs. Design your questions using ask_question "
+        " to help you understand the user's story, so you can write a song about the user's experience that "
         "resonates with them. We have equipped you with a set of tools to help you write this story; please use them. You are "
         "very good at making the user feel comfortable, understood, and ready to share their feelings and story. Occasionally "
         "(every 2 messages or so) you will suggest some lyrics, one section at a time, and see what the user thinks of them. "
@@ -145,7 +153,11 @@ def get_starting_messages(song_lengths: str, song_title: str, song_blurb: str, s
 
     first_message = first_msg_res.choices[0].message.content
     starting_messages = initial_messages + [{'role': 'assistant', 'content': first_message}]
-    return starting_messages, messages_to_history(starting_messages)
+
+    history = [ChatMessage(role = x['role'], content = x['content']) for x in starting_messages]
+    history = history[2:]
+
+    return starting_messages, history
 
 def update_song_details(instrumental_output: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     """

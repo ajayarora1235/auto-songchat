@@ -53,6 +53,42 @@
   {
     "type": "function",
     "function": {
+      "name": "ask_question",
+      "description": "Ask a question to the user to get more information. This function should be called when the AI needs more information about the user to continue writing the song.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "clarify_arguments",
+      "description": "Ask a question to the user to get more information. This function should be called when the AI needs clarification on arguments to pass to a different function call. Should always be called for snippet_clip_to_continue_from in get_audio_snippet and whole_song in revise_instrumental_tags.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "function_name": {
+            "type": "string",
+            "description": "Function to call that needs clarification on arguments"
+          },
+          "arguments_to_clarify": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of questions to ask the end user to clarify the arguments we don't know"
+          }
+        },
+        "required": ["function_name", "arguments_to_clarify"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
       "name": "revise_section_lyrics",
       "description": "Revise a consecutive set of lines from a section of a song based on given ideas",
       "parameters": {
@@ -73,14 +109,6 @@
             },
             "description": "Lines to revise, as a list of numbers. The first line is labelled 1, second 2, and so on. Lines to change should be assessed based on feedback user provides and where they suggest changes."
           },
-          "snippet_instrumental_tags": {
-            "type": "string",
-            "description": "Instrumental tags to be used for this section revision. This should be the exact same as what was used for the snippet being revised. The instrumental tags are listed under the recent audio clip html."
-          },
-          "snippet_clip_to_continue_from": {
-            "type": "string",
-            "description": "The 'continued from clip:' clip id that was used in the original snippet we are now revising. This should be the exact same as 'continued from clip' for the snippet being revised, listed under the original snippet's audioplayer; if it is None, this should not be passed."
-          },
           "relevant_ideas": {
             "type": "array",
             "items": {
@@ -96,7 +124,7 @@
             "description": "Words that are requested to be included in revised lines. Unless specific words are requested, this should be empty"
           }
         },
-        "required": ["section_name", "current_section", "lines_to_revise", "snippet_instrumental_tags"]
+        "required": ["section_name", "current_section", "lines_to_revise"]
       }
     }
   },
@@ -134,6 +162,64 @@
   {
     "type": "function",
     "function": {
+      "name": "revise_section_lyrics_and_instrumental",
+      "description": "Incorporates simultaneous feedback on lyrics and instrumental from a single user message. Call this when the user either has both feedback on lyric changes and instrumental changes that they ask for in a single message or they ask to regenerate a snippet with both changed lyrics and instrumental tags in mind.", 
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "current_instrumental_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Current instrumental tags passed to instrumental generator. Deduce from most recent list of instrumental tags in conversation."
+          },
+          "user_instrumental_feedback": {
+            "type": "string",
+            "description": "A single sentence summary of the user's feedback on instrumental. Can include suggested moods, genres, or instruments."
+          },
+          "section_name": {
+            "type": "string",
+            "description": "Name of section we are revising"
+          },
+          "current_section": {
+            "type": "string",
+            "description": "Current version of lyrics in section of the song. The last outputted version of the section before user suggested changes that we are now implementing."
+          },
+          "lines_to_revise": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Lines to revise, as a list of numbers. The first line is labelled 1, second 2, and so on. Lines to change should be assessed based on feedback user provides and where they suggest changes."
+          },
+          "snippet_clip_to_continue_from": {
+            "type": "string",
+            "description": "The 'continued from clip:' clip id that was used in the original snippet we are now revising. This should be the exact same as 'continued from clip' for the snippet being revised, listed under the original section's snippet's audioplayer; if it is None, this should not be passed."
+          },
+          "relevant_ideas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Ideas that should be included in the lines that are being changed. Should be directly derived from suggested user changes."
+          },
+          "relevant_words": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Words that are requested to be included in revised lines. Unless specific words are requested, this should be empty"
+          }
+
+        },
+        "required": ["current_instrumental_tags", "user_instrumental_feedback", "section_name", "current_section", "lines_to_revise"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
       "name": "get_audio_snippet",
       "description": "Call this function when the user explicitly asks 'Can I have an audio snippet'. Return a clip of all the parts of the song we've written that they have not heard.",
       "parameters": {
@@ -149,7 +235,7 @@
           },
           "snippet_clip_to_continue_from": {
             "type": "string",
-            "description": "The last approved song clip to continue from. Almost always the most recent clip id outputted in the conversation. If user did not receive a snippet for the prior section or ever before, this should not be passed."
+            "description": "The last approved song clip to continue from. Almost always the most recent clip id outputted in the conversation. This is located in the tool message prior to the assistant message with the audio player for that audio. If user did not receive a snippet for the prior section or ever before, this should not be passed."
           }
         },
         "required": ["snippet_lyrics", "snippet_instrumental_tags"]
@@ -208,7 +294,7 @@
           },
           "snippet_clip_to_continue_from": {
             "type": "string",
-            "description": "The last approved clip ID of the song to continue the remaining sections from. Almost always the most recent clip id outputted in the conversation. If user did not receive a snippet for the prior section or ever before, this should not be passed."
+            "description": "The last approved clip ID of the song to continue the remaining sections from. Almost always the most recent clip id outputted in the conversation. This is located in the tool message prior to the assistant message with the audio player for that audio. If user did not receive a snippet for the prior section or ever before, this should not be passed."
           },
           "sections_written": {
             "type": "array",

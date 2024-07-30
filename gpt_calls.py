@@ -31,6 +31,33 @@ class AI_Songwriter:
         {}"""
 
 
+    
+    def ask_question(self, messages):
+        convo = messages[:-1]
+
+        instruction = "Based on this conversation history, respond to the user acknowledging their most recent response and ask a concise question to further learn more about the user's story."
+
+        ## iterate thru messages and format them into a single string where each message is separated by a newline (ie Assistant: ...\n User: ...\n)
+        convo_str = ""
+        for message in convo:
+            convo_str += f"{message['role']}: {message['content']}\n"
+        convo_str += "Assistant:"
+
+        input = f"{instruction}\nConversation History:\n{convo_str}"
+        
+        response = self.oai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "user",
+                    "content": input
+                }
+            ],
+        )
+
+        return response.choices[0].message.content
+
+    
     def write_section(self, section_name, section_description, relevant_ideas, section_length, sections_written=None, overall_song_description=None):
         instruction = f"Write a {section_name} of length {section_length} that that incorporates the following ideas"
         if sections_written is not None:
@@ -70,14 +97,20 @@ class AI_Songwriter:
             messages=convo,
         ) 
 
-        return "Pass this back to the user: \n" + response.choices[0].message.content
+        return "Pass this back to the user and ask if they would like to receive an audio snippet or make any revisions before moving to the next section: \n" + response.choices[0].message.content
 
     def revise_section_lyrics(self, section_name, current_section, lines_to_revise, relevant_ideas=None, relevant_words=None):
         lines_to_infill = ", ".join([str(x) for x in lines_to_revise])
 
         full_incomplete_verse = current_section.strip("\n ").split("\n")
+
+        max_line_num = max(lines_to_revise)
+        if max_line_num > len(full_incomplete_verse):
+            full_incomplete_verse.extend([''] * (max_line_num - len(full_incomplete_verse)))
+
         for line_num in lines_to_revise:
-            full_incomplete_verse[line_num-1] = '___'
+            if line_num <= len(full_incomplete_verse):
+                full_incomplete_verse[line_num-1] = '___'
 
         line_phrase = "lines" if len(lines_to_infill) > 1 else "line"
         line_phrase = str(len(lines_to_infill)) + " " + line_phrase
@@ -173,37 +206,4 @@ class AI_Songwriter:
         )
 
         return response.choices[0].message.content
-    
-    # def get_relevant_ideas(self, section_name, section_description, conversation_history):
-    #     instruction = f"Identify the relevant ideas from the conversation history that can be used in the {section_name} given its description. Output your ideas as a bullet separated list (ie - idea 1, - idea 2) such that each idea is in the format 'I ...', 'I ...', etc."
-
-    #     input = f"""Section Description: {section_description}\nConversation History:{conversation_history}\nRelevant ideas:"""
-
-    #     prompt = self.alpaca_prompt.format(instruction, input, "")
-
-    #     convo = [
-    #         {
-    #             "role": "user",
-    #             "content": prompt,
-    #         },
-    #     ]
-    #     response = self.oai_client.chat.completions.create(
-    #         model="gpt-4o",
-    #         messages=convo,
-    #     )
-
-    #     return response.choices[0].message.content
-
-#     def get_audio_snippet(self, snippet_lyrics, snippet_instrumental_tags, snippet_clip_to_continue):
-#         # add a message of user asking for audio snippet
-#         song_link = make_song(genre_input, lyrics, new_tags, last_clip)
-# #     # Add the audio to the message and history
-    
-# #     audio_message = {'role': 'assistant', 'content': f'<audio controls autoplay><source src="{song_link}" type="audio/mp3"></audio>'}
-# #     new_messages = messages + [snippet_request, audio_message]
-# #     new_history = messages_to_history(new_messages)
-
-# #     return new_history, new_messages
-
-#         pass
 
