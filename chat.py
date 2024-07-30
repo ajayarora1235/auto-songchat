@@ -358,7 +358,12 @@ def model_chat(genre_input, query: Optional[str], history: Optional[History], me
                     yield '', new_history, new_messages, "", "", "", clips_to_continue, None, generated_audios, ["merge snippets", "continue to next section"]
 
                 else:
-                    updated_clip_id = updated_clip_url.split("https://audiopipe.suno.ai/?item_id=")[1]
+                    if "https://audiopipe.suno.ai/?item_id=" in updated_clip_url:
+                        updated_clip_id = updated_clip_url.split("https://audiopipe.suno.ai/?item_id=")[1]
+                    elif "https://cdn1.suno.ai/" in updated_clip_url:
+                        updated_clip_id = updated_clip_url.split("https://cdn1.suno.ai/")[1].split(".mp3")[0]
+                    else:
+                        updated_clip_id = "unknown"
 
                     #pass this info in new tool and assistant message
                     tool_message = {'role': 'tool', 'tool_call_id': tool_call_id, 'name': tool_function_name, 'content': f'updated clip id: {updated_clip_id}\nupdated lyrics: {updated_lyrics}\nupdated clips path: {clips_list}'}
@@ -423,11 +428,20 @@ def model_chat(genre_input, query: Optional[str], history: Optional[History], me
                 if snippet_clip_to_continue_from not in [None, ""]:
                     updated_clip_url = "still streaming"
                     while "still streaming" in updated_clip_url:
-                        updated_clip_url, updated_lyrics, updated_tags, clips_list = concat_snippets(song_link.split("https://audiopipe.suno.ai/?item_id=")[1])
+                        if "https://audiopipe.suno.ai/?item_id=" in song_link:
+                            clip_id = song_link.split("https://audiopipe.suno.ai/?item_id=")[1]
+                        else:
+                            clip_id = updated_clip_url.split("https://cdn1.suno.ai/")[1].split(".mp3")[0]
+                        updated_clip_url, updated_lyrics, updated_tags, clips_list = concat_snippets(clip_id)
                 else:
                     updated_clip_url, updated_lyrics, clips_list = song_link, remaining_lyrics, []
                 ## YIELD UPDATED CLIP URL, LYRICS, AND CLIPS LIST
-                updated_clip_id = updated_clip_url.split("https://audiopipe.suno.ai/?item_id=")[1]
+                if "https://audiopipe.suno.ai/?item_id=" in updated_clip_url:
+                    updated_clip_id = updated_clip_url.split("https://audiopipe.suno.ai/?item_id=")[1]
+                elif "https://cdn1.suno.ai/" in updated_clip_url:
+                    updated_clip_id = updated_clip_url.split("https://cdn1.suno.ai/")[1].split(".mp3")[0]
+                else:
+                    updated_clip_id = "unknown"
 
                 #tool and assistant message
                 tool_message = {'role': 'tool', 'tool_call_id': tool_call_id, 'name': tool_function_name, 'content': f'updated clip id: {updated_clip_id}\nupdated lyrics: {updated_lyrics}\nupdated clips path: {clips_list}'}

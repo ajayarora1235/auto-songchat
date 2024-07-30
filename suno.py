@@ -63,16 +63,32 @@ def generate_song(tags, prompt, save_path, clip_id=None, continue_at=30):
           print("No data in response, retrying", response_data)
           time.sleep(2)
           continue
-        elif response_data[0]["status"] == 'streaming':
+        
+        # Check if response_data is a list or a dictionary
+        elif isinstance(response_data, list):
+            if len(response_data) == 0 or "status" not in response_data[0]:
+                print("Invalid response data, update later")
+                time.sleep(2)
+                continue
+            status = response_data[0]["status"]
+        elif isinstance(response_data, dict):
+            if "status" not in response_data:
+                print("Invalid response data, update later")
+                time.sleep(2)
+                continue
+            status = response_data["status"]
+        else:
+            print("Unexpected response format, update later")
+            time.sleep(2)
+            continue
+
+        if status == 'streaming':
           return "Snippet to extend is still streaming, please wait to request later."
-        if response_data[0]["status"] == 'complete':
+        if status == 'complete':
           break
         else:
           time.sleep(8)
           continue
-
-
-      
 
   response = requests.post(api_endpoint_submit, json=data) #,headers=headers)
   response_data = response.json()
@@ -110,12 +126,33 @@ def generate_song(tags, prompt, save_path, clip_id=None, continue_at=30):
   while True:
     response = requests.get(api_endpoint_info + song_id, headers=headers)
     response_data = response.json()
+    status = ""
     if response.status_code != 200:
       print("No data in response, retrying", response_data)
       time.sleep(2)
       continue
       # print("Got response", response_data)
-    if response_data[0]["status"] == 'streaming':
+        # Check if response_data is a list or a dictionary
+    if isinstance(response_data, list):
+        if len(response_data) == 0 or "status" not in response_data[0]:
+            print("Invalid response data, update later")
+            time.sleep(2)
+            continue
+        status = response_data[0]["status"]
+        audio_url = response_data[0].get("audio_url", "")
+    elif isinstance(response_data, dict):
+        if "status" not in response_data:
+            print("Invalid response data, update later")
+            time.sleep(2)
+            continue
+        status = response_data["status"]
+        audio_url = response_data.get("audio_url", "")
+    else:
+        print("Unexpected response format, update later")
+        time.sleep(2)
+        continue
+
+    if status == 'streaming':
       break
     else:
       time.sleep(2)
@@ -123,8 +160,8 @@ def generate_song(tags, prompt, save_path, clip_id=None, continue_at=30):
     # if time.time() - startTime > 300:
     #   raise Exception("Timeout while waiting for song completion")
   
-  print("Got song", response_data[0]["audio_url"])
-  url = response_data[0]["audio_url"]
+  print("Got song", audio_url)
+  url = audio_url
 
   return url
 
@@ -133,6 +170,7 @@ def concat_snippets(clip_id):
   feed_url = api_endpoint_info + clip_id
 
   while True:
+    status = ""
     response = requests.get(feed_url, headers=headers)
     response_data = response.json()
     if response.status_code != 200:
@@ -140,15 +178,25 @@ def concat_snippets(clip_id):
       time.sleep(2)
       continue
     if isinstance(response_data, list):
+        if len(response_data) == 0 or "status" not in response_data[0]:
+            print("Invalid list response data, update later")
+            continue
         status = response_data[0]["status"]
-    else:
+    elif isinstance(response_data, dict):
+        if "status" not in response_data:
+            print("Invalid dictionary response data, update later")
+            continue
         status = response_data["status"]
+    else:
+        print("Unexpected response format, update later")
+        continue
 
     if status == 'streaming':
         return "Song is still streaming, please wait to request later.", None, None, []
     if status == 'complete':
         break
     else:
+      print("Streaming status couldn't be retrieved, response_data was ", response_data)
       time.sleep(8)
       continue
 
@@ -177,8 +225,29 @@ def concat_snippets(clip_id):
       print("No data in response, retrying", response_data)
       time.sleep(2)
       continue
-      # print("Got response", response_data)
-    if response_data[0]["status"] == 'streaming' or response_data[0]["audio_url"] != "" or response_data[0]["status"] == 'complete':
+    print("Got concat snippet response", response_data)
+    
+    # Check if response_data is a list or a dictionary
+    if isinstance(response_data, list):
+        if len(response_data) == 0 or "status" not in response_data[0]:
+            print("Invalid response data, update later")
+            time.sleep(2)
+            continue
+        status = response_data[0]["status"]
+        audio_url = response_data[0].get("audio_url", "")
+    elif isinstance(response_data, dict):
+        if "status" not in response_data:
+            print("Invalid response data, update later")
+            time.sleep(2)
+            continue
+        status = response_data["status"]
+        audio_url = response_data.get("audio_url", "")
+    else:
+        print("Unexpected response format, update later")
+        time.sleep(2)
+        continue
+
+    if status == 'streaming' or audio_url != "" or status == 'complete':
       break
     else:
       time.sleep(2)
@@ -186,8 +255,8 @@ def concat_snippets(clip_id):
     # if time.time() - startTime > 300:
     #   raise Exception("Timeout while waiting for song completion")
   
-  print("Got song", response_data[0]["audio_url"])
-  url = response_data[0]["audio_url"]
+  print("Got song", audio_url)
+  url = audio_url
 
   return url, lyrics, tags, concatenated_clips
 
@@ -204,11 +273,31 @@ def update_song_links(generated_audios):
         if response.status_code != 200:
           print("No data in response, retrying", response_data)
           continue
-        elif response_data[0]["status"] == 'streaming':
+        
+        # Check if response_data is a list or a dictionary
+        status = ""
+        audio_url = ""
+        if isinstance(response_data, list):
+            if len(response_data) == 0 or "status" not in response_data[0]:
+                print("Invalid list response data, update later")
+                continue
+            status = response_data[0]["status"]
+            audio_url = response_data[0].get("audio_url", "")
+        elif isinstance(response_data, dict):
+            if "status" not in response_data:
+                print("Invalid dictionary response data, update later")
+                continue
+            status = response_data["status"]
+            audio_url = response_data.get("audio_url", "")
+        else:
+            print("Unexpected response format, update later")
+            continue
+
+        if status == 'streaming':
           print("still streaming, update later")
           continue
-        if response_data[0]["status"] == 'complete':
-          updated_clip_path = response_data[0]["audio_url"]
+        if status == 'complete' and audio_url != "":
+          updated_clip_path = audio_url
           print(updated_clip_path)
           updated_generated_audios[i] = (updated_clip_path, lyrics, instrumental, title, "complete")
 
