@@ -137,7 +137,12 @@ class AI_Songwriter:
         instruction += "Here's an example:\n{convo}\nNow do it for this input:"
         
         
-        input = f"""Ideas to use: {", ".join(relevant_ideas)}\nGenre: Songwriter Pop\nEra: 2010s\nCurrent section:\n{full_incomplete_verse}\n\nLyrics:"""
+        input = ""
+        if relevant_ideas is not None and isinstance(relevant_ideas, list):
+            input += f"Ideas to use: {', '.join(relevant_ideas)}\n"
+        if relevant_words is not None and isinstance(relevant_words, list):
+            input += f"Words to use: {', '.join(relevant_words)}\n"
+        input += f"Genre: Songwriter Pop\nEra: 2010s\nCurrent section:\n{full_incomplete_verse}\n\nLyrics:"
 
         prompt = self.alpaca_prompt.format(instruction, input, "")
 

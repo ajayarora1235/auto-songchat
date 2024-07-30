@@ -20,7 +20,7 @@ History = List[Tuple[str, str]] # a type: pairs of (query, response), where quer
 Messages = List[Dict[str, str]] # a type: list of messages with role and content
 
 client_key = os.getenv("OPEN_AI_KEY")
-print(client_key)
+# print(client_key)
 oai_client = OpenAI(
     api_key=client_key,
 )

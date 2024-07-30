@@ -4,7 +4,7 @@ import os
 import asyncio
 import httpx
 
-base_url = "http://127.0.0.1:8000"
+base_url = "https://sss-api-blond.vercel.app"
 api_endpoint_submit = f"{base_url}/generate/"
 api_endpoint_concat = f"{base_url}/generate/concat"
 api_endpoint_info = f"{base_url}/feed/"
@@ -139,11 +139,15 @@ def concat_snippets(clip_id):
       print("No data in response, retrying", response_data)
       time.sleep(2)
       continue
-    ## CATCH THE CASE WHERE response_data a list of length 1 versus just a dictionary straight up
-    elif response_data["status"] == 'streaming':
-       return "Song is still streaming, please wait to request later.", None, None, []
-    if response_data["status"] == 'complete':
-      break
+    if isinstance(response_data, list):
+        status = response_data[0]["status"]
+    else:
+        status = response_data["status"]
+
+    if status == 'streaming':
+        return "Song is still streaming, please wait to request later.", None, None, []
+    if status == 'complete':
+        break
     else:
       time.sleep(8)
       continue
