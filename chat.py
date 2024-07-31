@@ -355,7 +355,7 @@ def model_chat(genre_input, query: Optional[str], history: Optional[History], me
                     clips_to_continue = gr.Dropdown(label='Clip to continue', value = "", choices=[x[3] for x in generated_audios]+[""], interactive=True)
 
 
-                    yield '', new_history, new_messages, "", "", "", clips_to_continue, None, generated_audios, ["merge snippets", "continue to next section"]
+                    yield '', new_history, new_messages, "", "", "", clips_to_continue, None, generated_audios, []
 
                 else:
                     if "https://audiopipe.suno.ai/?item_id=" in updated_clip_url:
@@ -486,7 +486,7 @@ def model_chat(genre_input, query: Optional[str], history: Optional[History], me
 
                     generated_audios = update_song_links(generated_audios)
                     clips_to_continue = gr.Dropdown(label='Clip to continue', value = "", choices=[x[3] for x in generated_audios]+[""], interactive=True)
-                    buttons = ["generate audio snippet", "revise lyrics", "revise genre", "merge snippets", "continue to next section"]
+                    buttons = []
 
                     yield '', new_history, new_messages, snippet_lyrics.split("\n")[0], snippet_lyrics, snippet_instrumental_tags, clips_to_continue, None, generated_audios, buttons
                     
