@@ -491,6 +491,35 @@ def model_chat(genre_input, query: Optional[str], history: Optional[History], me
                     yield '', new_history, new_messages, snippet_lyrics.split("\n")[0], snippet_lyrics, snippet_instrumental_tags, clips_to_continue, None, generated_audios, buttons
                     
                     return
+                
+
+                if "no clip with that ID" in song_link:
+                    tool_message = {
+                        'role': 'tool',
+                        'tool_call_id': tool_call_id,
+                        'name': tool_function_name,
+                        'content': 'The clip ID was incorrect, maybe clarify with the user.'
+                    }
+
+                    new_messages = messages + [tool_message]
+
+                    model_response_with_function_call = oai_client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=new_messages,
+                    )  # get a new response from the model where it can see the function response
+                    current_response = model_response_with_function_call.choices[0].message.content
+
+                    role = "assistant"
+                    new_messages = new_messages + [{'role': role, 'content': current_response}]
+                    new_history = messages_to_history(new_messages)
+
+                    generated_audios = update_song_links(generated_audios)
+                    clips_to_continue = gr.Dropdown(label='Clip to continue', value = "", choices=[x[3] for x in generated_audios]+[""], interactive=True)
+                    buttons = []
+
+                    yield '', new_history, new_messages, snippet_lyrics.split("\n")[0], snippet_lyrics, snippet_instrumental_tags, clips_to_continue, None, generated_audios, buttons
+                    
+                    return
                 print("MAKE SONG IS DONE")
                 ## filter out suno link from tool query arg
                 clip_id = song_link.split("https://audiopipe.suno.ai/?item_id=")[1]

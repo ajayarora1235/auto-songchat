@@ -67,28 +67,28 @@ def generate_song(tags, prompt, save_path, clip_id=None, continue_at=30):
         # Check if response_data is a list or a dictionary
         elif isinstance(response_data, list):
             if len(response_data) == 0 or "status" not in response_data[0]:
-                print("Invalid response data, update later")
-                time.sleep(2)
-                continue
+                print("Invalid response data,  no clip with that ID found")
+                return "no clip with that ID found to continue from"
+                # time.sleep(2)
+                # continue
             status = response_data[0]["status"]
         elif isinstance(response_data, dict):
             if "status" not in response_data:
-                print("Invalid response data, update later")
+                print("Invalid response data, no clip with that ID found")
+                return "no clip with that ID found to continue from"
                 time.sleep(2)
                 continue
             status = response_data["status"]
         else:
-            print("Unexpected response format, update later")
+            print("Unexpected response format, no clip with that ID found")
+            return "no clip with that ID found to continue from"
             time.sleep(2)
             continue
 
-        if status == 'streaming':
+        if status != 'complete': 
           return "Snippet to extend is still streaming, please wait to request later."
-        if status == 'complete':
-          break
         else:
-          time.sleep(8)
-          continue
+          break
 
   response = requests.post(api_endpoint_submit, json=data) #,headers=headers)
   response_data = response.json()

@@ -199,7 +199,7 @@ with gr.Blocks(css=css) as demo:
                 return button_dict[button_name]
 
             def set_regenerate_query(textbox, current_section, current_lyrics, curr_tags, clip_to_continue):
-                return f"Can you revise this section so it uses these lyrics and instrumentals and then generate an audio snippet using it?\nLyrics:\n{current_lyrics}Instrumental tags: {curr_tags}\nClip to continue: {clip_to_continue}"
+                return f"Can you revise this section so it uses these lyrics and instrumentals and then generate an audio snippet using it?\nLyrics:\n{current_lyrics}Instrumental tags: {curr_tags}"
             def set_snippet_query(textbox):
                 return "Can I have an audio snippet of what we have now?"
             def set_finish_query(textbox):
@@ -247,26 +247,26 @@ with gr.Blocks(css=css) as demo:
                             make_modal_visible, [tutorial_step], [tutorial_step, modal, modal_1, modal_2]
                         )
 
-            with gr.Row():
-                # get_snippet_button = gr.Button("Get Audio Snippet", scale=2)
-                done = gr.Button("Finish Full Song 🎶", scale=4)
-                #autoGPT_checkbox = gr.Checkbox(label="AutoGPT", value=True, info="Auto-generate responses from journal entry", interactive=True, scale=2)
-                #journal_llm_creativity = gr.Slider(label="Journal LLM Temperature", minimum=0, maximum=1, step=0.01, value=1, interactive=True, scale=2)
-                reset_button = gr.Button("Reset", scale=2)
+            # with gr.Row():
+            #     # get_snippet_button = gr.Button("Get Audio Snippet", scale=2)
+            #     done = gr.Button("Finish Full Song 🎶", scale=4)
+            #     #autoGPT_checkbox = gr.Checkbox(label="AutoGPT", value=True, info="Auto-generate responses from journal entry", interactive=True, scale=2)
+            #     #journal_llm_creativity = gr.Slider(label="Journal LLM Temperature", minimum=0, maximum=1, step=0.01, value=1, interactive=True, scale=2)
+            #     reset_button = gr.Button("Reset", scale=2)
             
-                def reset_chat(messages, chatbot_history):
-                    messages = messages[:2]
-                    chatbot_history = messages_to_history(messages[:2])
-                    return messages, chatbot_history, '', '', '', '', gr.HTML('<center>generating...</center>'), [], []
+            #     def reset_chat(messages, chatbot_history):
+            #         messages = messages[:2]
+            #         chatbot_history = messages_to_history(messages[:2])
+            #         return messages, chatbot_history, '', '', '', '', gr.HTML('<center>generating...</center>'), [], []
                 
-                reset_button.click(reset_chat, inputs=[messages, chatbot_history], outputs=[messages, chatbot_history, current_section, current_lyrics, curr_tags, clip_to_continue, curr_audio, generated_audios, button_options])
+            #     reset_button.click(reset_chat, inputs=[messages, chatbot_history], outputs=[messages, chatbot_history, current_section, current_lyrics, curr_tags, clip_to_continue, curr_audio, generated_audios, button_options])
             
 
-            done.click(set_finish_query, inputs=[textbox], outputs=[textbox]).then(model_chat,
-                inputs=[genre_input, textbox, chatbot_history, messages, generated_audios],
-                outputs=[textbox, chatbot_history, messages, current_section, current_lyrics, curr_tags, clip_to_continue, curr_audio, generated_audios, button_options])
+            # done.click(set_finish_query, inputs=[textbox], outputs=[textbox]).then(model_chat,
+            #     inputs=[genre_input, textbox, chatbot_history, messages, generated_audios],
+            #     outputs=[textbox, chatbot_history, messages, current_section, current_lyrics, curr_tags, clip_to_continue, curr_audio, generated_audios, button_options])
 
-            demo.load(reset_chat, inputs=[messages, chatbot_history], outputs=[messages, chatbot_history, current_section, current_lyrics, curr_tags, clip_to_continue, curr_audio, generated_audios])
+            # demo.load(reset_chat, inputs=[messages, chatbot_history], outputs=[messages, chatbot_history, current_section, current_lyrics, curr_tags, clip_to_continue, curr_audio, generated_audios])
             
             
             # with gr.Row():
