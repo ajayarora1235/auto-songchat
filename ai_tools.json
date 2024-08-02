@@ -65,24 +65,22 @@
   {
     "type": "function",
     "function": {
-      "name": "clarify_arguments",
-      "description": "Ask a question to the user to get more information. This function should be called when the AI needs clarification on arguments to pass to a different function call. Should always be called for snippet_clip_to_continue_from in get_audio_snippet and whole_song in revise_instrumental_tags.",
+      "name": "edit_directly",
+      "description": "A function to be called when the user asks to directly edit either the lyrics or genre via the instrumental tags. Returns the current section or instrumental tags for the user to edit directly.",
       "parameters": {
         "type": "object",
         "properties": {
-          "function_name": {
+          "edit_type": {
             "type": "string",
-            "description": "Function to call that needs clarification on arguments"
+            "enum": ["lyrics", "genre"],
+            "description": "Specifies whether the user wants to edit the lyrics or the genre."
           },
-          "arguments_to_clarify": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "List of questions to ask the end user to clarify the arguments we don't know"
+          "current_item_to_edit": {
+            "type": "string",
+            "description": "The current lyrics section or instrumental tags that the user wants to edit."
           }
         },
-        "required": ["function_name", "arguments_to_clarify"]
+        "required": ["edit_type", "current_item_to_edit"]
       }
     }
   },
