@@ -33,7 +33,7 @@ def determine_title(section_name, generated_audios):
         section_name = f"{section_name} {count + 1}"
     return section_name
 
-async def call_with_timeout(coro, timeout):
+async def call_with_timeout(coro, timeout=45):
     try:
         return await asyncio.wait_for(coro, timeout)
     except asyncio.TimeoutError:
@@ -310,7 +310,7 @@ async def model_chat(genre_input, query: Optional[str], history: Optional[Histor
                     sections_list = re.findall(r'\[.*?\]', current_lyrics)
 
                     #current_lyrics = "\n".join(tool_query_args['sections_written'])
-                    song_link = await call_with_timeout(run_in_executor(make_song, current_lyrics, new_instrumental_tags))
+                    song_link = await call_with_timeout(run_in_executor(make_song, current_lyrics, new_instrumental_tags), 45)
                     ## filter out suno link from tool query arg
                     while "https://audiopipe.suno.ai/?item_id=" not in song_link:
                         print("BUGGED OUT, trying again...")
@@ -322,7 +322,7 @@ async def model_chat(genre_input, query: Optional[str], history: Optional[Histor
                             yield '', new_history, new_messages, '', '', '', None, None, generated_audios, []
                             return
                         time.sleep(5)
-                        song_link = await call_with_timeout(run_in_executor(make_song, current_lyrics, new_instrumental_tags))
+                        song_link = await call_with_timeout(run_in_executor(make_song, current_lyrics, new_instrumental_tags), 45)
 
                     clip_id = song_link.split("https://audiopipe.suno.ai/?item_id=")[1]
 
@@ -358,7 +358,7 @@ async def model_chat(genre_input, query: Optional[str], history: Optional[Histor
                     
                     new_instrumental_tags = songwriterAssistant.revise_instrumental_tags(snippet_instrumental_tags, user_instrumental_feedback)
 
-                    song_link = await call_with_timeout(run_in_executor(make_song, current_lyrics, new_instrumental_tags))
+                    song_link = await call_with_timeout(run_in_executor(make_song, current_lyrics, new_instrumental_tags), 45)
                     ## filter out suno link from tool query arg
                     while "https://audiopipe.suno.ai/?item_id=" not in song_link:
                         print("BUGGED OUT, trying again...")
@@ -370,7 +370,7 @@ async def model_chat(genre_input, query: Optional[str], history: Optional[Histor
                             yield '', new_history, new_messages, '', '', '', None, None, generated_audios, []
                             return
                         time.sleep(5)
-                        song_link = await call_with_timeout(run_in_executor(make_song, current_lyrics, new_instrumental_tags))
+                        song_link = await call_with_timeout(run_in_executor(make_song, current_lyrics, new_instrumental_tags), 45)
                     clip_id = song_link.split("https://audiopipe.suno.ai/?item_id=")[1]
 
                     tool_message_instrumental = {'role': 'tool', 'tool_call_id': tool_call_id, 'name': tool_function_name, 'content': f'revised lyrics: {revised_lyrics}\nrevised instrumental tags: {new_instrumental_tags}, clip id: {clip_id}'}
@@ -389,7 +389,7 @@ async def model_chat(genre_input, query: Optional[str], history: Optional[Histor
                     yield '', new_history, new_messages, tool_query_args["section_name"], revised_lyrics, new_instrumental_tags, clips_to_continue, f'<audio controls><source src="{song_link}" type="audio/mp3"></audio>', generated_audios, buttons
                 
                 elif tool_function_name == 'merge_all_snippets':
-                    updated_clip_url, updated_lyrics, updated_tags, clips_list = await call_with_timeout(run_in_executor(concat_snippets, tool_query_args['last_snippet_id']))
+                    updated_clip_url, updated_lyrics, updated_tags, clips_list = await call_with_timeout(run_in_executor(concat_snippets, tool_query_args['last_snippet_id']), 45)
 
                     if updated_clip_url == "Timeout":
                         # Handle the timeout case
