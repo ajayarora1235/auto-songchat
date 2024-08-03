@@ -31,7 +31,7 @@ with gr.Blocks(css=css) as demo:
             gr.Markdown("""<center><font size=4>But first, let's generate a song seed to provide context to the AI Songwriter.</font></center>""")
             gr.Markdown("""<center><font size=3>If you're stuck thinking of a song idea, check out <a href="https://onestopforwriters.com/emotions" target="_blank">here</a>.</font></center>""")
             with gr.Row():
-                feeling_input = gr.Textbox(label="What do you want the song to capture? What's an emotion(s) that you've personally felt that should be in the song? More vulnerable, better the song.", placeholder='Enter your story', scale=2)
+                feeling_input = gr.Textbox(label="How are you feeling today?", placeholder='Enter your emotions', scale=2)
                 # audio_input = gr.Audio(sources=["upload"], type="numpy", label="Instrumental",
                 #                 interactive=True, elem_id="instrumental-input")
                 
@@ -69,7 +69,7 @@ with gr.Blocks(css=css) as demo:
             feeling_input.submit(generate_song_seed, inputs=[feeling_input], outputs=[instrumental_output]).then(clean_song_seed, inputs=[instrumental_output], outputs=[instrumental_output])
             
             def make_row_visible(x):
-                return gr.Row(visible=True), gr.Markdown("""<center><font size=4>Here it is! Hit 'Approve' to confirm this concept. Edit the concept directly or hit 'Try Again' to get another suggestion.</font></center>""", visible=True)
+                return gr.Row(visible=True), gr.Markdown("""<center><font size=4>Here it is! Hit 'Approve' to confirm this concept. Edit the concept directly or hit 'Try Again' to get another suggestion.</font></center>""", visible=False)
             def enable_button(x):
                 return gr.Button("Ready to Create", interactive=True)
             generate_seed_button.click(make_row_visible, inputs=[generate_seed_button], outputs=[concept_row, concept_desc])
@@ -101,7 +101,7 @@ with gr.Blocks(css=css) as demo:
 
             with gr.Row():
                 with gr.Column(scale=2):
-                    chatbot_history = gr.Chatbot(type="messages", value=starting_history, label='SongChat', placeholder=None, layout='bubble', bubble_full_width=False, height=500, show_copy_button=True)
+                    chatbot_history = gr.Chatbot(type="messages", value=starting_history, label='SongChat', placeholder=None, layout='bubble', bubble_full_width=False, height=500)
                     with gr.Row():
                         typical_responses = [textbox, submit]
                         
@@ -110,15 +110,15 @@ with gr.Blocks(css=css) as demo:
 
                         button_options = gr.State([])
                         button_dict = gr.State({
-                            "revise lyrics": "Can we revise the lyrics?",
-                            "re-revise lyrics": "Can we revise the lyrics?", 
+                            "revise lyrics": "Can we revise the lyrics together?",
+                            "re-revise lyrics": "Can we revise the lyrics together?", 
                             "edit lyrics directly": "Can I edit the lyrics directly for the whole section?",
                             "generate audio snippet": "Can you generate an audio snippet?", 
                             "continue revising" : "Can we continue revising this section?", 
                             "generate audio snippet with new lyrics": "Can you generate an audio snippet with these new lyrics?", 
                             "return to original instrumental": "Can you use the original clip for this section instead?", 
-                            "revise genre": "Can we revise the instrumental tags?",
-                            "re-revise genre": "Can we revise the instrumental tags?", 
+                            "revise genre": "Can we revise the instrumental tags together?",
+                            "re-revise genre": "Can we revise the instrumental tags together?", 
                             "revise genre directly": "Can I edit the genre directly for the whole song?",
                             "continue to next section": "Looks good! Let's move on to the next section.",
                             "merge snippets": "Can you merge this snippet into its full song?"
@@ -171,15 +171,15 @@ with gr.Blocks(css=css) as demo:
             continue_btn.click(get_starting_messages, inputs=[instrumental_textbox, title_input, blurb_input, genre_input, section_meanings], outputs=[messages, chatbot_history])
 
             with Modal(visible=False) as modal_0:
-                gr.Markdown("Welcome to the AI songwriter! The AI songwriter will help you write a song. You can chat with the AI, generate lyrics, and listen to audio snippets. Let's start by chatting with the AI.")
+                gr.Markdown("Welcome to the AI songwriter! The AI songwriter is a chatbot that will help you write a song. You can chat with the AI and guide it however you'd like. Let's start by chatting with the AI.")
             with Modal(visible=False) as modal:
-                gr.Markdown("The chatbot is run by an AI songwriter. It can respond to your conversations, generate lyrics and audio, and edit prior generations.\n\nNow, continue and respond to this second question from the AI songwriter.")
+                gr.Markdown("The AI songwriter can respond to your stories and requests, generate lyrics and audio, and edit prior generations.\n\nNow, continue and respond to this second question from the AI songwriter to get to know you.")
             with Modal(visible=False) as modal_1:
-                gr.Markdown("The AI songwriter has now proposed a first verse! You now have the option to hear an audio snippet, revise the lyrics, or continue to the next section. The latter two options continue the conversation, whereas the first starts audio generation models. Select the 'get audio snippet' button to continue to the next step.")
+                gr.Markdown("The AI songwriter has now proposed a first verse! After each generation from the AI, you'll receive a list of buttons to guide it further. Select the 'get audio snippet' button to continue to the next step.")
             with Modal(visible=False) as modal_2:
-                gr.Markdown("Awesome! You generated your first audio snippet./n/n As you work thru each section, the generated snippets are populated on the right panel. You'll be able to listen thru snippets as you work thru the song. \n\n "
-                            "The current section is also displayed on the right panel. You'll be able to revise sections via the chat or directly via the right panel. \n\n "
-                            "You're ready to start your official song! Hit the 'Start' button to start.")
+                gr.Markdown("Awesome! You generated your first audio snippet. The songwriter will continue for the each section for the rest of the song, revising and iterating with you. \n"
+                            "As the song gets generated, feel free to ask the songwriter any questions or guide it in any direction. \n"
+                            "You're ready to start your study with the AI Songwriter! Hit the 'Start' button to start.")
                 start_button = gr.Button("Start")
             
             continue_btn.click(lambda: Modal(visible=True), None, modal_0)
@@ -260,18 +260,24 @@ with gr.Blocks(css=css) as demo:
                 reset_button = gr.Button("Reset", scale=2)
             
                 def reset_chat(messages, chatbot_history):
-                    messages = messages[:2]
-                    chatbot_history = messages_to_history(messages[:2])
+                    messages = messages[:3]
+                    chatbot_history = messages_to_history(messages[:3])
                     return messages, chatbot_history, '', '', '', '', gr.HTML('<center>generating...</center>'), [], []
                 
-                reset_button.click(reset_chat, inputs=[messages, chatbot_history], outputs=[messages, chatbot_history, current_section, current_lyrics, curr_tags, clip_to_continue, curr_audio, generated_audios, button_options])
+                reset_button.click(reset_chat, inputs=[messages, chatbot_history], outputs=[messages, chatbot_history, current_section, current_lyrics, curr_tags, clip_to_continue, curr_audio, generated_audios, button_options]).then(
+                        update_response_options, [button_options, button_dict], typical_responses
+                )
             
 
             done.click(set_finish_query, inputs=[textbox], outputs=[textbox]).then(model_chat,
                 inputs=[genre_input, textbox, chatbot_history, messages, generated_audios],
-                outputs=[textbox, chatbot_history, messages, current_section, current_lyrics, curr_tags, clip_to_continue, curr_audio, generated_audios, button_options])
+                outputs=[textbox, chatbot_history, messages, current_section, current_lyrics, curr_tags, clip_to_continue, curr_audio, generated_audios, button_options]).then(
+                        update_response_options, [button_options, button_dict], typical_responses
+                )
 
-            demo.load(reset_chat, inputs=[messages, chatbot_history], outputs=[messages, chatbot_history, current_section, current_lyrics, curr_tags, clip_to_continue, curr_audio, generated_audios])
+            demo.load(reset_chat, inputs=[messages, chatbot_history], outputs=[messages, chatbot_history, current_section, current_lyrics, curr_tags, clip_to_continue, curr_audio, generated_audios, button_options]).then(
+                        update_response_options, [button_options, button_dict], typical_responses
+                )
             
             
             # with gr.Row():

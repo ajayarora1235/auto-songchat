@@ -64,7 +64,7 @@ class AI_Songwriter:
             instruction += "and complements the sections provided."
         else:
             instruction += "."
-        instruction += "You are also given a section description, genre, era, and overall description of the song."
+        instruction += "You are also given a section description, genre, era, and overall description of the song. Please do not literally quote and incorporate the ideas - be poetic and incorporate them artistically to express the emotion. "
 
         ## read in prompt lyrics from convo .txt and add it to instruction
         with open("prompts/write_section_ex.txt", "r") as f:
@@ -130,7 +130,7 @@ class AI_Songwriter:
         else:
             instruction += "."
         
-        instruction += "You are also given a genre, era, and the rest of the section."
+        instruction += "You are also given a genre, era, and the rest of the section. Please do not literally quote and incorporate the ideas - be poetic and incorporate them artistically to express the emotion. "
         
         with open("prompts/revise_section_ex.txt", "r") as f:
             convo = f.read()

@@ -8,6 +8,8 @@ import regex as re
 from gradio_modal import Modal
 import gradio as gr
 import time
+from concurrent.futures import ThreadPoolExecutor
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -37,8 +39,14 @@ async def call_with_timeout(coro, timeout):
     except asyncio.TimeoutError:
         return "Timeout"
 
+executor = ThreadPoolExecutor()
 
-def model_chat(genre_input, query: Optional[str], history: Optional[History], messages: Optional[Messages], generated_audios: List[Tuple[str, str, str]], auto=False) -> Tuple[str, History, Messages, str, str, str, str, str, List]:
+async def run_in_executor(func, *args):
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, func, *args)
+
+
+async def model_chat(genre_input, query: Optional[str], history: Optional[History], messages: Optional[Messages], generated_audios: List[Tuple[str, str, str]], auto=False) -> Tuple[str, History, Messages, str, str, str, str, str, List]:
     if query is None:
         query = ''
     with open('ai_tools.json') as f:
@@ -52,7 +60,7 @@ def model_chat(genre_input, query: Optional[str], history: Optional[History], me
         messages = messages + [{'role': 'user', 'content': query}]
 
 
-    messages_filtered = messages
+    messages_filtered = messages.copy()
     response_message = oai_client.chat.completions.create(
         model="gpt-4o",
         messages=messages_filtered,
@@ -302,7 +310,7 @@ def model_chat(genre_input, query: Optional[str], history: Optional[History], me
                     sections_list = re.findall(r'\[.*?\]', current_lyrics)
 
                     #current_lyrics = "\n".join(tool_query_args['sections_written'])
-                    song_link = make_song(current_lyrics, new_instrumental_tags)
+                    song_link = await call_with_timeout(run_in_executor(make_song, current_lyrics, new_instrumental_tags))
                     ## filter out suno link from tool query arg
                     while "https://audiopipe.suno.ai/?item_id=" not in song_link:
                         print("BUGGED OUT, trying again...")
@@ -314,7 +322,7 @@ def model_chat(genre_input, query: Optional[str], history: Optional[History], me
                             yield '', new_history, new_messages, '', '', '', None, None, generated_audios, []
                             return
                         time.sleep(5)
-                        song_link = make_song(current_lyrics, new_instrumental_tags)
+                        song_link = await call_with_timeout(run_in_executor(make_song, current_lyrics, new_instrumental_tags))
 
                     clip_id = song_link.split("https://audiopipe.suno.ai/?item_id=")[1]
 
@@ -350,7 +358,7 @@ def model_chat(genre_input, query: Optional[str], history: Optional[History], me
                     
                     new_instrumental_tags = songwriterAssistant.revise_instrumental_tags(snippet_instrumental_tags, user_instrumental_feedback)
 
-                    song_link = make_song(current_lyrics, new_instrumental_tags)
+                    song_link = await call_with_timeout(run_in_executor(make_song, current_lyrics, new_instrumental_tags))
                     ## filter out suno link from tool query arg
                     while "https://audiopipe.suno.ai/?item_id=" not in song_link:
                         print("BUGGED OUT, trying again...")
@@ -362,7 +370,7 @@ def model_chat(genre_input, query: Optional[str], history: Optional[History], me
                             yield '', new_history, new_messages, '', '', '', None, None, generated_audios, []
                             return
                         time.sleep(5)
-                        song_link = make_song(current_lyrics, new_instrumental_tags)
+                        song_link = await call_with_timeout(run_in_executor(make_song, current_lyrics, new_instrumental_tags))
                     clip_id = song_link.split("https://audiopipe.suno.ai/?item_id=")[1]
 
                     tool_message_instrumental = {'role': 'tool', 'tool_call_id': tool_call_id, 'name': tool_function_name, 'content': f'revised lyrics: {revised_lyrics}\nrevised instrumental tags: {new_instrumental_tags}, clip id: {clip_id}'}
@@ -381,7 +389,7 @@ def model_chat(genre_input, query: Optional[str], history: Optional[History], me
                     yield '', new_history, new_messages, tool_query_args["section_name"], revised_lyrics, new_instrumental_tags, clips_to_continue, f'<audio controls><source src="{song_link}" type="audio/mp3"></audio>', generated_audios, buttons
                 
                 elif tool_function_name == 'merge_all_snippets':
-                    updated_clip_url, updated_lyrics, updated_tags, clips_list = concat_snippets(tool_query_args['last_snippet_id'])
+                    updated_clip_url, updated_lyrics, updated_tags, clips_list = await call_with_timeout(run_in_executor(concat_snippets, tool_query_args['last_snippet_id']))
 
                     if updated_clip_url == "Timeout":
                         # Handle the timeout case
@@ -508,7 +516,7 @@ def model_chat(genre_input, query: Optional[str], history: Optional[History], me
                     snippet_instrumental_tags = tool_query_args['snippet_instrumental_tags']
 
                     snippet_clip_to_continue_from = tool_query_args.get('snippet_clip_to_continue_from', None)
-                    song_link = make_song(snippet_lyrics, snippet_instrumental_tags, snippet_clip_to_continue_from)
+                    song_link = await call_with_timeout(run_in_executor(make_song, snippet_lyrics, snippet_instrumental_tags, snippet_clip_to_continue_from), 45) 
 
                     if song_link == "Timeout":
                         tool_message = {
@@ -625,12 +633,13 @@ def model_chat(genre_input, query: Optional[str], history: Optional[History], me
                 else: 
                     print(f"Error: function {tool_function_name} does not exist")
         except Exception as e:
+            print(str(e))
             error_message = {
                 'role': 'assistant',
-                'content': f"An error occurred while processing your request: {str(e)}. Please re-phrase your request and try again."
+                'content': f"An error occurred while processing your request. Please re-phrase your request and try again."
             }
             messages_filtered.append(error_message)
-            yield '', messages_to_history(messages), messages_filtered, '', '', '', '', None, generated_audios, []
+            yield '', messages_to_history(messages_filtered), messages_filtered, '', '', '', '', None, generated_audios, []
 
             
     else: 
